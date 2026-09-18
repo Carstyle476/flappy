@@ -135,13 +135,14 @@ def main() -> None:
     player: Bird = Bird((0, 0), (0, 0, 0), 0, 0)
 
     def setup_game() -> None:
-        nonlocal paused, unpause_timer, player_score, player_score_render, spawn_obstacle_timer, all_sprites, player
+        nonlocal paused, unpause_timer, player_score, player_score_render, spawn_obstacle_timer, flap, all_sprites, player
 
         paused = False
         unpause_timer = UNPAUSE_DELAY
         player_score = 0
         player_score_render = SMALL_FONT.render(str(player_score), True, (255, 255, 255))
         spawn_obstacle_timer = OBSTACLE_DELAY
+        flap = False
 
         all_sprites = pygame.sprite.Group()
         player = Bird(BIRD_SIZE, BIRD_COLOR, BIRD_SIZE[0], WINDOW_SIZE[1] // 2 - BIRD_SIZE[1] // 2)
@@ -204,7 +205,8 @@ def main() -> None:
                         spawn_obstacle_timer = OBSTACLE_DELAY
 
                     all_sprites.update(dt)
-                    if player.y + player.rect.height > WINDOW_SIZE[1] or player.y < 0 or len(pygame.sprite.spritecollide(player, all_sprites, False)) > 1: # pyright: ignore[reportArgumentType]
+                    if player.y + player.rect.height > WINDOW_SIZE[1] or len(pygame.sprite.spritecollide(player, all_sprites, False)) > 1: # pyright: ignore[reportArgumentType]
+                        #                                                                      the player always collides with itself  ^^^
                         state = 2
                         final_score_display = text_rect_center(SMALL_FONT, f"Final score: {player_score}", (255, 255, 255), (WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
                         crash.play()
