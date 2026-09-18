@@ -5,11 +5,11 @@
 
 This is my attempt at Flappy Bird style clone.
 
-The obstacles are more like randomly-scattered asteroids rather than actual pipes.
+You are a rectangular bird flying through what seems to be outer space, with rectangular asteroids blocking your path.
 
-The visual theme is also very different, reminiscient of my previous [Pong](https://github.com/Carstyle476/pong) clone.
+However, for some reason there is gravity in space. Just keep flapping, and don't question it!
 
-Why? I just like it.
+Why did I make it like this? Because I just like it.
 
 
 ## Cloning this thing
