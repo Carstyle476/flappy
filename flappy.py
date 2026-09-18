@@ -4,7 +4,7 @@ from random import random, randint
 
 WINDOW_SIZE: tuple[int, int] = (640, 480)
 WINDOW_NAME: str = "Flappy!"
-TRANSPARENCY: int = 192
+TRANSPARENCY: int = 128
 BIG_FONT_SIZE: int = 48
 SMALL_FONT_SIZE: int = 24
 BIRD_COLOR: tuple[int, int, int] = (255, 255, 255)
@@ -46,11 +46,6 @@ class Bird(Entity):
         self.vel_y += GRAVITY * dt / 2
         self.y += self.vel_y * dt
         self.vel_y += GRAVITY * dt / 2
-
-        if self.y < 0 or self.y > WINDOW_SIZE[1] - self.rect.height:
-            self.y = max(0, min(WINDOW_SIZE[1] - self.rect.height, self.y))
-            self.vel_y = 0
-
         self.rect.y = int(self.y)
 
 
@@ -64,6 +59,8 @@ def main() -> None:
     pygame.init()
 
     pygame.mixer.init()
+    crash: pygame.mixer.Sound = pygame.mixer.Sound("sounds/crash.ogg")
+    flap_sfx: pygame.mixer.Sound = pygame.mixer.Sound("sounds/flap_sfx.ogg")
     menu_move: pygame.mixer.Sound = pygame.mixer.Sound("sounds/menu_move.ogg")
 
     SMALL_FONT: pygame.font.Font = pygame.font.SysFont("Verdana", SMALL_FONT_SIZE)
@@ -138,7 +135,6 @@ def main() -> None:
     player: Bird = Bird((0, 0), (0, 0, 0), 0, 0)
 
     def setup_game() -> None:
-        # questionable line of code
         nonlocal paused, unpause_timer, player_score, player_score_render, spawn_obstacle_timer, all_sprites, player
 
         paused = False
@@ -148,7 +144,7 @@ def main() -> None:
         spawn_obstacle_timer = OBSTACLE_DELAY
 
         all_sprites = pygame.sprite.Group()
-        player = Bird(BIRD_SIZE, BIRD_COLOR, BIRD_SIZE[0], WINDOW_SIZE[1] / 2 - BIRD_SIZE[1] / 2)
+        player = Bird(BIRD_SIZE, BIRD_COLOR, BIRD_SIZE[0], WINDOW_SIZE[1] // 2 - BIRD_SIZE[1] // 2)
         all_sprites.add(player)
 
     # 0 = menu
@@ -184,7 +180,7 @@ def main() -> None:
                     elif event.key == pygame.K_ESCAPE:
                         paused = True
                         menu_move.play()
-                    elif unpause_timer <= 0: flap = True
+                    elif unpause_timer <= 0 and player.y >= 0: flap = True
 
         dt: float = clock.tick() / 1000
         transparent.fill((0, 0, 0, TRANSPARENCY)) # drawing background with transparency makes a cool fake motion blur effect
@@ -194,32 +190,48 @@ def main() -> None:
             screen.blit(MENU_TEXT[0], MENU_TEXT[1])
             screen.blit(MENU_INSTRUCTIONS[0], MENU_INSTRUCTIONS[1])
             screen.blit(CONTROL_INSTRUCTIONS[0], CONTROL_INSTRUCTIONS[1])
-            screen.blit(final_score_display[0], final_score_display[1])
         elif state == 1: # game
             if not(paused):
-                if unpause_timer > 0:
+                if unpause_timer > 0: # unpause delay
                     unpause_timer -= dt
                     unpause_timer_render = BIG_FONT.render(str(int(unpause_timer) + 1), True, (255, 255, 255))
                     screen.blit(unpause_timer_render, unpause_timer_render.get_rect(center=(WINDOW_SIZE[0] / 2, WINDOW_SIZE[1] / 2)))
                 else:                    
                     if spawn_obstacle_timer > 0: spawn_obstacle_timer -= dt
                     else:
-                        all_sprites.add(Entity((randint(MIN_OBSTACLE_SIZE[0], MAX_OBSTACLE_SIZE[0]), randint(MIN_OBSTACLE_SIZE[1], MAX_OBSTACLE_SIZE[1])), OBSTACLE_COLOR, WINDOW_SIZE[0], randint(0, WINDOW_SIZE[1])))
+                        obstacle_height: int = randint(MIN_OBSTACLE_SIZE[1], MAX_OBSTACLE_SIZE[1])
+                        all_sprites.add(Entity((randint(MIN_OBSTACLE_SIZE[0], MAX_OBSTACLE_SIZE[0]), obstacle_height), OBSTACLE_COLOR, WINDOW_SIZE[0], randint(0, WINDOW_SIZE[1] - obstacle_height)))
                         spawn_obstacle_timer = OBSTACLE_DELAY
 
                     all_sprites.update(dt)
-                    if len(pygame.sprite.spritecollide(player, all_sprites, False)) > 1: state = 2 # pyright: ignore[reportArgumentType]
+                    if player.y + player.rect.height > WINDOW_SIZE[1] or player.y < 0 or len(pygame.sprite.spritecollide(player, all_sprites, False)) > 1: # pyright: ignore[reportArgumentType]
+                        state = 2
+                        final_score_display = text_rect_center(SMALL_FONT, f"Final score: {player_score}", (255, 255, 255), (WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
+                        crash.play()
+
+                    # sprite deletion
+                    to_delete: list[Entity] = []
+                    for sprite in all_sprites:
+                        if sprite.x + sprite.rect.width < 0: to_delete.append(sprite)
+                    for sprite in to_delete:
+                        all_sprites.remove(sprite)
+                        player_score += 1
+                        player_score_render = SMALL_FONT.render(str(player_score), True, (255, 255, 255))
+
+                    # flapping
                     if flap:
                         player.vel_y = -FLAP_FORCE
                         flap = False
+                        flap_sfx.play()
 
-            screen.blit(player_score_render, player_score_render.get_rect(center=(WINDOW_SIZE[0] / 2, SMALL_FONT_SIZE)))
+            screen.blit(player_score_render, player_score_render.get_rect(center=(WINDOW_SIZE[0] // 2, SMALL_FONT_SIZE)))
             all_sprites.draw(screen)
             if paused:
                 screen.blit(transparent, (0, 0))
                 screen.blit(PAUSE_TEXT[0], PAUSE_TEXT[1])
                 screen.blit(PAUSE_INSTRUCTIONS[0], PAUSE_INSTRUCTIONS[1])
         elif state == 2: # dead
+            screen.blit(final_score_display[0], final_score_display[1])
             screen.blit(GAME_OVER_TEXT[0], GAME_OVER_TEXT[1])
             screen.blit(GAME_OVER_INSTRUCTIONS[0], GAME_OVER_INSTRUCTIONS[1])
 
