@@ -5,11 +5,11 @@
 
 This is my attempt at Flappy Bird style clone.
 
-Right now, the obstacles are more like randomly-scattered asteroids rather than actual pipes.
+The obstacles are more like randomly-scattered asteroids rather than actual pipes.
 
 The visual theme is also very different, reminiscient of my previous [Pong](https://github.com/Carstyle476/pong) clone.
 
-Proper shapes coming soon, hopefully!
+Why? I just like it.
 
 
 ## Cloning this thing
