@@ -180,6 +180,7 @@ def main() -> None:
                             menu_move.play()
                     elif event.key == pygame.K_ESCAPE:
                         paused = True
+                        flap = False
                         menu_move.play()
                     elif unpause_timer <= 0 and player.y >= 0: flap = True
 
