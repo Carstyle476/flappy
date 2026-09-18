@@ -3,7 +3,7 @@
 
 ![A screenshot of the game.](screenshot.png)
 
-This is my attempt at Flappy bird style clone.
+This is my attempt at Flappy Bird style clone.
 
 Right now, the obstacles are more like randomly-scattered asteroids rather than actual pipes.
 
@@ -34,7 +34,7 @@ pip install -r requirements.txt
 Then you can run the game.
 
 ```
-py pong.py
+py flappy.py
 ```
 
 The "release" is a .zip file containing flappy.py, requirements.txt, and the sounds folder.
